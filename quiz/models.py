@@ -8,10 +8,11 @@ class Images (models.Model):
     image = models.ImageField(null=True)
 
 
+
 class Categories(models.Model):
     name = models.CharField(db_column='Name', max_length=100)
     description = models.TextField(db_column='Description')
-    images = models.ForeignKey(Images, on_delete=models.CASCADE)
+    image = models.ForeignKey(Images, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -22,7 +23,7 @@ class Quiz(models.Model):
     name = models.CharField(max_length=50, db_column='Name')
     release_date = models.DateField(db_column='ReleaseDate')
     description = models.TextField(db_column='Description')
-    images = models.ForeignKey(Images, on_delete=models.CASCADE)
+    image = models.ForeignKey(Images, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
