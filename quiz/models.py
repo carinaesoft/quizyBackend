@@ -1,31 +1,32 @@
 from django.db import models
 
-
-# Create your models here.
-
-class Images (models.Model):
-    name = models.CharField(max_length=200)
-    image = models.ImageField(null=True)
-
-    def __str__(self):
-        return self.name
+DIFF_CHOICES = (
+    ('easy', 'easy'),
+    ('medium', 'medium'),
+    ('hard', 'hard'),
+)
 
 
 class Categories(models.Model):
-    name = models.CharField(db_column='Name', max_length=100)
-    description = models.TextField(db_column='Description')
-    image = models.ForeignKey(Images, on_delete=models.CASCADE)
-
+    name = models.CharField(max_length=150)
+    description = models.TextField()
     def __str__(self):
         return self.name
-
 
 class Quiz(models.Model):
-    category = models.ForeignKey(Categories, on_delete=models.CASCADE, db_column='Category')
-    name = models.CharField(max_length=50, db_column='Name')
-    release_date = models.DateField(db_column='ReleaseDate')
-    description = models.TextField(db_column='Description')
-    image = models.ForeignKey(Images, on_delete=models.CASCADE)
+    name = models.CharField(max_length=120)
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE, default=1)
+    number_of_questions = models.IntegerField()
+    time = models.IntegerField(help_text="duration of the quiz in minutes")
+    required_score_to_pass = models.IntegerField(help_text="required score in %")
+    difficulty = models.CharField(max_length=6, choices=DIFF_CHOICES)
 
     def __str__(self):
-        return self.name
+        return f"{self.name}-{self.category}"
+
+    def get_questions(self):
+        return self.question_set.all()
+
+    class Meta:
+        verbose_name_plural = 'Quiz'
+

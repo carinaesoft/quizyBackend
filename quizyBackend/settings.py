@@ -37,7 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'api',
     'quiz',
+    'results',
+    'questions',
     'rest_framework',
     'corsheaders'
 ]
@@ -86,19 +89,18 @@ WSGI_APPLICATION = 'quizyBackend.wsgi.application'
     }
 }'''
 
+
 DATABASES = {
-
-    'default': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME':'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'Cermak10',
-        'HOST': '141.144.244.160',
-        'PORT': '5432',
-
-    }
-
+    "default": {
+        "ENGINE": "mssql",
+        "NAME": "quizyBackend",
+        "USER": "admin",
+        "PASSWORD": "Cermak10",
+        "HOST": "DESKTOP-9UHDIJL",
+        "PORT": "1433",
+        "OPTIONS": {"driver": "ODBC Driver 17 for SQL Server",
+        },
+    },
 }
 
 # Password validation

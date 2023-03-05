@@ -1,7 +1,6 @@
 from django.contrib import admin
-from .models import Categories, Quiz, Images
-
+from .models import Quiz, Categories
 # Register your models here.
-admin.site.register(Categories)
+
 admin.site.register(Quiz)
-admin.site.register(Images)
+admin.site.register(Categories)
