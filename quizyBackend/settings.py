@@ -103,6 +103,21 @@ DATABASES = {
     },
 }
 
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'quizyDB',
+        'USER': 'admin',
+        'PASSWORD': 'Cermak10',
+        'HOST': 'localhost',
+        'PORT': '5432',  # Default postgres port
+    }
+}
+
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
@@ -168,4 +183,8 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
 ]
