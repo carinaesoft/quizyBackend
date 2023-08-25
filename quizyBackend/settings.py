@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'results',
     'questions',
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
+    'django_mptt_admin',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -82,28 +84,19 @@ WSGI_APPLICATION = 'quizyBackend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-'''DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}'''
-
-
 DATABASES = {
-    "default": {
-        "ENGINE": "mssql",
-        "NAME": "quizyBackend",
-        "USER": "admin",
-        "PASSWORD": "Cermak10",
-        "HOST": "DESKTOP-9UHDIJL",
-        "PORT": "1433",
-        "OPTIONS": {"driver": "ODBC Driver 17 for SQL Server",
-        },
-    },
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'quizyDB',
+        'USER': 'admin',
+        'PASSWORD': 'Cermak10',
+        'HOST': 'db',  # Use the service name from docker-compose.yml
+        'PORT': '5432',
+    }
 }
 
 
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -114,7 +107,7 @@ DATABASES = {
         'PORT': '5432',  # Default postgres port
     }
 }
-
+'''
 
 
 

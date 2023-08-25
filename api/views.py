@@ -1,24 +1,18 @@
 from django.shortcuts import render
-from quiz.models import Quiz, Categories
+from quiz.models import Quiz, Category
 from questions.models import Question, Answer
-from api.serializers import QuizSerializer, CategorySerializer, QuestionSerializer
+from api.serializers import QuizSerializer, CategorySerializer, QuestionSerializer, MainPageCategorySerializer
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .utils import get_quizzes_for_category
 
 from rest_framework.permissions import IsAdminUser
 
 
-# Create your views here.
-
-class QuizList(generics.ListAPIView):
-    queryset = Quiz.objects.all()
-    serializer_class = QuizSerializer
-
-
 class QuizCreateAPIView(generics.CreateAPIView):
-    queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
 
     def create(self, request, *args, **kwargs):
@@ -34,7 +28,7 @@ class QuizCreateAPIView(generics.CreateAPIView):
 
 
 class CategoryList(generics.ListAPIView):
-    queryset = Categories.objects.all()
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
@@ -101,3 +95,38 @@ class QuestionsAPIView(APIView):
         serializer = QuestionSerializer(question)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class QuizList(generics.ListAPIView):
+    serializer_class = QuizSerializer
+
+    def get_queryset(self):
+        category_name = self.request.query_params.get('category', None)
+
+        if category_name:
+            try:
+                category = Category.objects.get(name=category_name)
+                categories = category.get_descendants(include_self=True)
+                return Quiz.objects.filter(category__in=categories)
+            except Category.DoesNotExist:
+                return Quiz.objects.none()
+        return Quiz.objects.all()
+
+
+class MainPageData(APIView):
+
+    def get(self, request):
+        # Fetch all root categories
+        root_categories = Category.objects.filter(parent__isnull=True)
+
+        # For each root category, get all associated quizzes including those in its subcategories
+        data = []
+        for cat in root_categories:
+            quizzes_for_category = get_quizzes_for_category(cat.id)  # This function would resemble your getQuizzesForCategory logic but in Django
+            serialized_data = MainPageCategorySerializer({
+                'id': cat.id,
+                'name': cat.name,
+                'quizzes': quizzes_for_category
+            })
+            data.append(serialized_data.data)
+
+        return Response(data)
