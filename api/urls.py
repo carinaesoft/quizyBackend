@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import QuizList, CategoryList, QuizQuestionsAPIView, MainPageData ,QuizCreateAPIView, QuestionsAPIView
 
+
 urlpatterns = [
     path('quiz/', QuizList.as_view(), name='quiz-list'),
     path('quizzes/', QuizList.as_view(), name='quiz-list'),
@@ -9,5 +10,4 @@ urlpatterns = [
     path('quiz/<int:quiz_id>/questions/', QuizQuestionsAPIView.as_view(), name='quiz-questions'),
     path('questions/', QuestionsAPIView.as_view(), name='questions-api'),
     path('mainpage/', MainPageData.as_view(), name='mainpage-api'),
-
 ]

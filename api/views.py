@@ -2,13 +2,14 @@ from django.shortcuts import render
 from quiz.models import Quiz, Category
 from questions.models import Question, Answer
 from api.serializers import QuizSerializer, CategorySerializer, QuestionSerializer, MainPageCategorySerializer
-from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import generics, filters
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from .utils import get_quizzes_for_category
-
+from .filter import CategoryFilter
 from rest_framework.permissions import IsAdminUser
 
 
@@ -30,6 +31,8 @@ class QuizCreateAPIView(generics.CreateAPIView):
 class CategoryList(generics.ListAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CategoryFilter
 
 
 class QuizQuestionsAPIView(APIView):

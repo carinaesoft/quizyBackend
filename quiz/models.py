@@ -41,6 +41,8 @@ DIFF_CHOICES = (
 
 class Category(MPTTModel):
     name = models.CharField(max_length=150)
+    description = models.TextField(blank=True)  # Add a description field
+    bgImage = models.ImageField(upload_to='category_images/', blank=True)  # Add an image field
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
 
     class MPTTMeta:

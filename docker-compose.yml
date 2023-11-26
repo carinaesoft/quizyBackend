@@ -6,6 +6,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
+      - media_volume:/app/media
     ports:
       - "8000:8000"
     depends_on:
@@ -20,14 +21,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  quiz-frontend:
-    image: node:14
-    working_dir: /app
-    volumes:
-      - ./quiz-frontend:/app
-    ports:
-      - "3000:3000"
-    command: [ "yarn", "start" ]
-
 volumes:
   postgres_data:
+  media_volume:

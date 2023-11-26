@@ -6,8 +6,10 @@ from questions.models import Question, Answer
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name', 'parent']
+        fields = ['id', 'name', 'parent', 'description', 'bgImage']
 
+    # If you want to include the URL of the image rather than the image file path:
+    bgImage = serializers.ImageField(use_url=True)
 
 class QuizSerializer(serializers.ModelSerializer):
     category_tree = serializers.SerializerMethodField()
