@@ -13,11 +13,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class QuizSerializer(serializers.ModelSerializer):
     category_tree = serializers.SerializerMethodField()
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
     class Meta:
         model = Quiz
-        fields = ['id', 'name', 'number_of_questions', 'time', 'required_score_to_pass', 'difficulty', 'category',
-                  'category_tree']
+        fields = ['id', 'name', 'number_of_questions', 'time', 'required_score_to_pass', 'difficulty', 'category', 'category_tree', 'is_featured', 'imgSrc', 'play_count']
 
     def get_category_tree(self, obj):
         category = obj.category
@@ -27,6 +27,13 @@ class QuizSerializer(serializers.ModelSerializer):
             tree.append(category.name)
         return tree[::-1]  # Reverse to get the tree from root to leaf
 
+    def create(self, validated_data):
+        if isinstance(validated_data, list):
+            quizzes = [Quiz(**item) for item in validated_data]
+            Quiz.objects.bulk_create(quizzes)
+            return quizzes
+        else:
+            return Quiz.objects.create(**validated_data)
 
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:

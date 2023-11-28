@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
+from rest_framework.generics import ListAPIView
 from .utils import get_quizzes_for_category
 from .filter import CategoryFilter
 from rest_framework.permissions import IsAdminUser
@@ -17,16 +17,11 @@ class QuizCreateAPIView(generics.CreateAPIView):
     serializer_class = QuizSerializer
 
     def create(self, request, *args, **kwargs):
-        if isinstance(request.data, list):  # If a list of objects was provided
-            serializer = self.get_serializer(data=request.data, many=True)
-            if serializer.is_valid():
-                self.perform_create(serializer)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:  # If a single object was provided
-            return super().create(request, *args, **kwargs)
-
+        serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 class CategoryList(generics.ListAPIView):
     queryset = Category.objects.all()
@@ -62,6 +57,21 @@ class QuizQuestionsAPIView(APIView):
             Answer.objects.create(text=answer_text.get('text'), question=question, correct=answer_text.get('correct'))
 
         return Response({'message': 'Question created successfully.'}, status=status.HTTP_201_CREATED)
+
+
+class PopularQuizzesView(ListAPIView):
+    serializer_class = QuizSerializer
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned quizzes to a given number,
+        by filtering against a `limit` query parameter in the URL.
+        """
+        queryset = Quiz.objects.all().order_by('-play_count')  # Order by play count
+        limit = self.request.query_params.get('limit', None)
+        if limit is not None:
+            queryset = queryset[:int(limit)]
+        return queryset
 
 
 class QuestionsAPIView(APIView):
