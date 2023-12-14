@@ -5,9 +5,17 @@ from mptt.admin import MPTTModelAdmin
 from django_mptt_admin.admin import DjangoMpttAdmin
 # Register your models here.
 
-admin.site.register(Quiz)
+def assign_common_image(modeladmin, request, queryset):
+    common_image_path = '/quiz_images/4.png'  # Specify the path to the common image
+    queryset.update(imgSrc=common_image_path)
 
+assign_common_image.short_description = "Assign common image to selected quizzes"
 
+@admin.register(Quiz)
+class QuizAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category']
+    ordering = ['name']
+    actions = [assign_common_image]
 
 @admin.register(Category)
 class CategoryAdmin(DjangoMpttAdmin):

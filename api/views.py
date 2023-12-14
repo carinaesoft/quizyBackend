@@ -1,34 +1,10 @@
-from django.shortcuts import render
-from quiz.models import Quiz, Category
+from quiz.models import Quiz
 from questions.models import Question, Answer
-from api.serializers import QuizSerializer, CategorySerializer, QuestionSerializer, MainPageCategorySerializer
+from api.serializers import QuestionSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework import generics, filters
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.generics import ListAPIView
 from .utils import get_quizzes_for_category
-from .filter import CategoryFilter
-from rest_framework.permissions import IsAdminUser
-
-
-class QuizCreateAPIView(generics.CreateAPIView):
-    serializer_class = QuizSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-class CategoryList(generics.ListAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = CategoryFilter
-
 
 class QuizQuestionsAPIView(APIView):
     def get(self, request, quiz_id):
@@ -59,19 +35,7 @@ class QuizQuestionsAPIView(APIView):
         return Response({'message': 'Question created successfully.'}, status=status.HTTP_201_CREATED)
 
 
-class PopularQuizzesView(ListAPIView):
-    serializer_class = QuizSerializer
 
-    def get_queryset(self):
-        """
-        Optionally restricts the returned quizzes to a given number,
-        by filtering against a `limit` query parameter in the URL.
-        """
-        queryset = Quiz.objects.all().order_by('-play_count')  # Order by play count
-        limit = self.request.query_params.get('limit', None)
-        if limit is not None:
-            queryset = queryset[:int(limit)]
-        return queryset
 
 
 class QuestionsAPIView(APIView):
@@ -109,37 +73,5 @@ class QuestionsAPIView(APIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class QuizList(generics.ListAPIView):
-    serializer_class = QuizSerializer
-
-    def get_queryset(self):
-        category_name = self.request.query_params.get('category', None)
-
-        if category_name:
-            try:
-                category = Category.objects.get(name=category_name)
-                categories = category.get_descendants(include_self=True)
-                return Quiz.objects.filter(category__in=categories)
-            except Category.DoesNotExist:
-                return Quiz.objects.none()
-        return Quiz.objects.all()
 
 
-class MainPageData(APIView):
-
-    def get(self, request):
-        # Fetch all root categories
-        root_categories = Category.objects.filter(parent__isnull=True)
-
-        # For each root category, get all associated quizzes including those in its subcategories
-        data = []
-        for cat in root_categories:
-            quizzes_for_category = get_quizzes_for_category(cat.id)  # This function would resemble your getQuizzesForCategory logic but in Django
-            serialized_data = MainPageCategorySerializer({
-                'id': cat.id,
-                'name': cat.name,
-                'quizzes': quizzes_for_category
-            })
-            data.append(serialized_data.data)
-
-        return Response(data)
