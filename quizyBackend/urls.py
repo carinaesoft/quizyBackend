@@ -21,5 +21,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('api.urls')),
-    path('api/', include("quiz.urls"))
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('api/', include("quiz.urls")),
+    path('api/questions/', include("questions.urls")),
+    path('api/game/', include('game_logic.urls')),
+    ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

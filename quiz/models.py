@@ -1,5 +1,6 @@
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
+from django.core.exceptions import ValidationError
 
 DIFF_CHOICES = (
     ('Łatwy', 'Łatwy'),
@@ -31,6 +32,12 @@ class Quiz(models.Model):
     imgSrc = models.ImageField(upload_to='quiz_images/', blank=True)  # Add an image field
     #tags
     play_count = models.IntegerField(default=0)
+    description = models.TextField(max_length=500, null=True)  # New description field
+
+    def save(self, *args, **kwargs):
+        if self.description and len(self.description) > 500:
+            raise ValidationError("Description cannot be more than 500 characters.")
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name}-{self.category}"

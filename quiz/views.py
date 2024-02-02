@@ -1,18 +1,20 @@
-
 from api.serializers import AnswerSerializer
 from quiz.models import Quiz, Category
-from questions.models import  Answer
 from .serializers import QuizSerializer, CategorySerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
 from .filter import CategoryFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import JSONParser
-
-from rest_framework.generics import ListAPIView
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from questions.models import Question, Answer
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+import uuid
+from quiz.utilities import generate_custom_unique_identifier
 
 class CategoryList(generics.ListAPIView):
     queryset = Category.objects.all()
@@ -21,11 +23,36 @@ class CategoryList(generics.ListAPIView):
     filterset_class = CategoryFilter
 
 
+class CategoryDetail(RetrieveAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    lookup_field = 'name'
+
+    def get_object(self):
+        """
+        Overrides the default method to fetch the object based on the category name.
+        """
+        queryset = self.get_queryset()
+        name = self.kwargs.get('category_name')
+        return get_object_or_404(queryset, name__iexact=name)
+
+class SubcategoryList(ListAPIView):
+    serializer_class = CategorySerializer
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the subcategories
+        for the category as determined by the category_name portion of the URL.
+        """
+        category_name = self.kwargs['category_name']
+        # Retrieve the parent category by its name (case insensitive)
+        parent_category = get_object_or_404(Category, name__iexact=category_name)
+        return Category.objects.filter(parent=parent_category)
 
 
 class QuizDetailAPIView(APIView):
     """
-    Retrieve a single quiz by its ID along with all its questions and answers.
+    Retrieve a single quiz by its ID along with all its question IDs.
     If the quiz does not exist, a 404 not found status is returned.
     """
     def get(self, request, quiz_id):
@@ -37,23 +64,19 @@ class QuizDetailAPIView(APIView):
         # Serialize the quiz with context
         quiz_serializer = QuizSerializer(quiz, context={'request': request})
 
-        # Fetch questions associated with this quiz
+        # Fetch questions associated with this quiz and store their IDs
         questions = quiz.get_questions()
-        questions_data = []
-        for question in questions:
-            answers = Answer.objects.filter(question=question)
-            answers_serializer = AnswerSerializer(answers, many=True)
+        question_ids = [question.id for question in questions]
 
-            question_data = {
-                'text': question.text,
-                'answers': answers_serializer.data
-            }
-            questions_data.append(question_data)
+        # Generate a unique hash for this response
+        game_hash = response_hash = generate_custom_unique_identifier()
 
         return Response({
             'quiz': quiz_serializer.data,
-            'questions': questions_data
+            'question_ids': question_ids,
+            'game_hash': game_hash  # Include the unique hash in the response
         })
+
 
 
 class PopularQuizzesView(ListAPIView):
@@ -112,5 +135,8 @@ class QuizCreateAPIView(generics.CreateAPIView):
         headers = self.get_success_headers(serializer.data)
         status_code = status.HTTP_201_CREATED if is_many else status.HTTP_200_OK
         return Response(serializer.data, status=status_code, headers=headers)
+
+
+
 
 

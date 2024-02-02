@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'quiz',
     'results',
     'questions',
+    'game_logic',
     'rest_framework',
     'corsheaders',
     'django_mptt_admin',
@@ -186,3 +187,25 @@ CORS_ALLOWED_ORIGINS = [
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',  # Warning: This will log all SQL queries
+            'propagate': False,
+        },
+    },
+}
