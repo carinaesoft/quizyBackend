@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     'api',
     'quiz',
@@ -58,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 
@@ -89,11 +92,11 @@ WSGI_APPLICATION = 'quizyBackend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'quizyDB',
-        'USER': 'admin',
-        'PASSWORD': 'Cermak10',
-        'HOST': 'db',  # Use the service name from docker-compose.yml
-        'PORT': '5432',
+        'NAME': os.environ.get('DATABASE_NAME', 'default_db_name'),
+        'USER': os.environ.get('DATABASE_USER', 'default_db_user'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'default_db_password'),
+        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),  # Default to localhost if not set
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),  # Default to 5432 if not set
     }
 }
 
@@ -147,6 +150,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -187,6 +191,8 @@ CORS_ALLOWED_ORIGINS = [
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 LOGGING = {
     'version': 1,
