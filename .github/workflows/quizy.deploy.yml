@@ -1,0 +1,37 @@
+name: quiz.Backend deploy
+
+on:
+  push:
+    branches: [master] # Trigger the workflow on push events to the master branch
+
+jobs:
+  build_and_test:
+    name: Build and Test
+    runs-on: ubuntu-latest # Specifies the runner environment
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2 # Checks out your repository under $GITHUB_WORKSPACE
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2 # Sets up Docker Buildx
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }} # Docker Hub username from GitHub Secrets
+          password: ${{ secrets.DOCKERHUB_TOKEN }} # Docker Hub token from GitHub Secrets
+
+      # Optional: Add a step for running Django tests or any other preliminary checks
+      # - name: Run tests
+      #   run: |
+      #     docker build -t django-test -f ./Dockerfile .  # Adjust Dockerfile path if necessary
+      #     docker run django-test python manage.py test  # Run Django tests
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: . # Docker build context
+          file: ./Dockerfile # Path to the Dockerfile, adjust if necessary
+          push: true # Enables pushing the image
+          tags: mbcodepl/mcms:quizybackend # Image tag, adjust to your naming convention
