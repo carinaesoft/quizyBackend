@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import os
+import environ
+
+# Initialize environ
+env = environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -89,14 +94,17 @@ WSGI_APPLICATION = 'quizyBackend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'default_db_name'),
-        'USER': os.environ.get('DATABASE_USER', 'default_db_user'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'default_db_password'),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),  # Default to localhost if not set
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),  # Default to 5432 if not set
+        'NAME': env('DATABASE_NAME'),
+        'USER': env('DATABASE_USER'),
+        'PASSWORD': env('DATABASE_PASSWORD'),
+        'HOST': env('DATABASE_HOST'),
+        'PORT': env('DATABASE_PORT'),
     }
 }
 
