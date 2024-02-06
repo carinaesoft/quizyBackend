@@ -22,14 +22,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Create .env file
-        run: |
-          echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
-          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
-          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-          echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> .env
-          echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> .env
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -54,4 +46,10 @@ jobs:
             docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
             docker pull mbcodepl/mcms:quizybackend
             docker container stop $(docker container ls -q --filter name=quizybackend_*)
-            docker run -d --restart unless-stopped --name quizybackend_${{ github.run_id }} -p 6002:6002 mbcodepl/mcms:quizybackend
+            docker run -d --restart unless-stopped --name quizybackend_${{ github.run_id }} -p 6002:6002 \
+            -e DATABASE_NAME="${{ secrets.DATABASE_NAME }}" \
+            -e DATABASE_USER="${{ secrets.DATABASE_USER }}" \
+            -e DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}" \
+            -e DATABASE_HOST="${{ secrets.DATABASE_HOST }}" \
+            -e DATABASE_PORT="${{ secrets.DATABASE_PORT }}" \
+            mbcodepl/mcms:quizybackend
