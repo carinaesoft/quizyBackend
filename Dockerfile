@@ -22,4 +22,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 6002
 
 # Command to run the application
-CMD ["gunicorn", "quizyBackend.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "quizyBackend.wsgi:application", "--bind", "0.0.0.0:6002"]
