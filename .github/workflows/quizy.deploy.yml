@@ -54,4 +54,4 @@ jobs:
             docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
             docker pull mbcodepl/mcms:quizybackend
             docker container stop $(docker container ls -q --filter name=quizybackend_*)
-            docker run -d --restart unless-stopped --name quizybackend_${{ github.run_id }} -p 6002:8000 mbcodepl/mcms:quizybackend
+            docker run -d --restart unless-stopped --name quizybackend_${{ github.run_id }} -p 6002:6002 mbcodepl/mcms:quizybackend
