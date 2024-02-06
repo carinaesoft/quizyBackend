@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'django_filters',
 ]
 
+CSRF_TRUSTED_ORIGINS = ['https://api.quiz.obud.pl']
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
