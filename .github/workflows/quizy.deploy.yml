@@ -47,6 +47,7 @@ jobs:
             docker pull mbcodepl/mcms:quizybackend
             docker container stop $(docker container ls -q --filter name=quizybackend_*)
             docker run -d --restart unless-stopped --name quizybackend_${{ github.run_id }} -p 6002:6002 \
+            -v /var/www/static/www/quiz.obud/media:/app/media \
             -e DATABASE_NAME="${{ secrets.DATABASE_NAME }}" \
             -e DATABASE_USER="${{ secrets.DATABASE_USER }}" \
             -e DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}" \
