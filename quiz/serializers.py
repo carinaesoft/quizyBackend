@@ -1,4 +1,4 @@
-from .models import Quiz, Category
+from .models import Quiz, Category, Tag
 from rest_framework import serializers
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -33,3 +33,10 @@ class QuizSerializer(serializers.ModelSerializer):
             return created_quizzes
         else:
             return Quiz.objects.create(**validated_data)
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['id', 'name', 'created_at']
+        read_only_fields = ['created_at']  # Assuming you want the created_at timestamp to be read-only

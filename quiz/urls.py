@@ -1,11 +1,17 @@
 from django.urls import path
-from .views import CategoryList, QuizDetailAPIView, QuizList, PopularQuizzesView, QuizCreateAPIView,SubcategoryList, CategoryDetail
-
+from .views import (
+    CategoryList,
+    QuizDetailAPIView,
+    QuizList,
+    PopularQuizzesView,
+    QuizCreateAPIView,
+    SubcategoryList,
+    CategoryDetail,
+    list_tags,
+    get_quiz_tags,
+)
 
 urlpatterns = [
-    # ... other URL patterns ...
-
-    # URL pattern for the QuizDetailAPIView
     path('quiz/<int:quiz_id>/', QuizDetailAPIView.as_view(), name='quiz-detail'),
     path('quiz/create/', QuizCreateAPIView.as_view(), name='quiz-create'),
     path('quiz/popular', PopularQuizzesView.as_view(), name='popular-quizzes'),
@@ -13,4 +19,6 @@ urlpatterns = [
     path('categories/', CategoryList.as_view(), name='category-list'),
     path('category/<str:category_name>/', CategoryDetail.as_view(), name='category-detail'),
     path('subcategories/<str:category_name>/', SubcategoryList.as_view(), name='subcategory-list'),
+    path('tags/', list_tags, name='list_tags'),
+    path('quizzes/<int:quiz_id>/tags/get', get_quiz_tags, name='get_quiz_tags'),
 ]
