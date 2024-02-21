@@ -140,6 +140,16 @@ class QuizList(generics.ListAPIView):
                 return Quiz.objects.none()
         return Quiz.objects.all()
 
+class QuizListFromCategory(ListAPIView):
+    serializer_class = QuizSerializer
+
+    def get_queryset(self):
+        """
+        This view returns a list of all quizzes for a given category.
+        The category_id is provided in the URL.
+        """
+        category_id = self.kwargs['category_id']
+        return Quiz.objects.filter(category_id=category_id)
 
 class QuizCreateAPIView(generics.CreateAPIView):
     """

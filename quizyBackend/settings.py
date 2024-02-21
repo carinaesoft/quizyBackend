@@ -220,16 +220,17 @@ LOGGING = {
     'loggers': {
         'django.request': {
             'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
+            'level': 'ERROR',  # Log errors related to requests
+            'propagate': True,
         },
         'django.db.backends': {
             'handlers': ['console'],
-            'level': 'DEBUG',  # Warning: This will log all SQL queries
+            'level': 'WARNING',  # Change this from DEBUG to WARNING to stop SQL query logs
             'propagate': False,
         },
     },
 }
+
 
 
 
