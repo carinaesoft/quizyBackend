@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Quiz, Category
+from .models import Quiz, Category, Tag
 from django.db.models import F, Value, Case, When, IntegerField
 from mptt.admin import MPTTModelAdmin
 from django_mptt_admin.admin import DjangoMpttAdmin
@@ -21,6 +21,16 @@ class QuizAdmin(admin.ModelAdmin):
 class CategoryAdmin(DjangoMpttAdmin):
     list_display = ['name', 'parent']
     search_fields = ['name']
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
+    ordering = ['name']
+    list_per_page = 10
+    list_max_show_all = 100
+    list_select_related = True
+    list_filter = ['name']
 
 
 

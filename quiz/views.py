@@ -1,22 +1,47 @@
-from api.serializers import AnswerSerializer
-from quiz.models import Quiz, Category
-from .serializers import QuizSerializer, CategorySerializer
-from rest_framework import status
-from rest_framework import generics
-from .filter import CategoryFilter
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.parsers import JSONParser
-from rest_framework.views import APIView
-from rest_framework.response import Response
+# Standard library imports
+import uuid
+
+# Related third-party imports
 from django.shortcuts import get_object_or_404
-from questions.models import Question, Answer
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, status
+from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView, RetrieveAPIView
-import uuid
+from rest_framework.parsers import JSONParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.core.exceptions import FieldDoesNotExist
+from django.db.models import Q
+from django.core.exceptions import FieldError,ValidationError
+
+from .serializers import QuizSerializer
+# Local application/library-specific imports
+from .filter import CategoryFilter
+from .serializers import CategorySerializer, QuizSerializer, TagSerializer
+from api.serializers import \
+    AnswerSerializer  # Assuming this is correct though it looks like it might be a local import as well
+from questions.models import Answer, Question
+from quiz.models import Category, Quiz, Tag
 from quiz.utilities import generate_custom_unique_identifier
 
+
+# --------------------- Class: CategoryList ---------------------
 class CategoryList(generics.ListAPIView):
+    """
+    Retrieves a list of all categories, allowing filtering by name and ordering.
+
+    **URL:** `/categories/` (GET)
+
+    **Parameters:**
+        - `search`: Optional string to filter categories by name (case-insensitive).
+        - `ordering`: Optional comma-separated list of fields to order the results.
+
+    **Return:**
+        JSON response containing serialized category data.
+    """
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = [DjangoFilterBackend]
@@ -35,6 +60,7 @@ class CategoryDetail(RetrieveAPIView):
         queryset = self.get_queryset()
         name = self.kwargs.get('category_name')
         return get_object_or_404(queryset, name__iexact=name)
+
 
 class SubcategoryList(ListAPIView):
     serializer_class = CategorySerializer
@@ -55,6 +81,7 @@ class QuizDetailAPIView(APIView):
     Retrieve a single quiz by its ID along with all its question IDs.
     If the quiz does not exist, a 404 not found status is returned.
     """
+
     def get(self, request, quiz_id):
         try:
             quiz = Quiz.objects.get(pk=quiz_id)
@@ -78,7 +105,6 @@ class QuizDetailAPIView(APIView):
         })
 
 
-
 class PopularQuizzesView(ListAPIView):
     """
     Return a list of all quizzes ordered by their play count descending.
@@ -97,26 +123,46 @@ class PopularQuizzesView(ListAPIView):
             queryset = queryset[:int(limit)]
         return queryset
 
+
 class QuizList(generics.ListAPIView):
     """
-    Return a list of all quizzes. If a 'category' parameter is supplied in the URL,
-    the view will return all quizzes belonging to that category and its subcategories.
-    If category does not exist it returns an empty response.
+    Return a list of all quizzes, with optional filtering based on category or tag,
+    and further filtering based on a specified field (e.g., name or ID).
     """
     serializer_class = QuizSerializer
 
     def get_queryset(self):
-        category_name = self.request.query_params.get('category', None)
+        filter_type = self.request.query_params.get('filter_type')
+        filter_field = self.request.query_params.get('filter_field')
+        filter_value = self.request.query_params.get('filter_value')
 
-        if category_name:
+        if filter_type and filter_field and filter_value:
+            # Construct the filter keyword dynamically
+            filter_keyword = f"{filter_type}__{filter_field}"
+
             try:
-                category = Category.objects.get(name=category_name)
-                categories = category.get_descendants(include_self=True)
-                return Quiz.objects.filter(category__in=categories)
-            except Category.DoesNotExist:
-                return Quiz.objects.none()
-        return Quiz.objects.all()
+                # Attempt to filter using the constructed keyword
+                queryset = Quiz.objects.filter(**{filter_keyword: filter_value})
+                if not queryset:
+                    raise ValidationError(f"No results found for the provided filter.")
+                return queryset
+            except FieldError as e:
+                # Catching FieldError to handle incorrect field paths
+                raise ValidationError(f"{filter_keyword} is not a valid field for filtering. Error: {str(e)}")
+        else:
+            return Quiz.objects.all()
 
+
+class QuizListFromCategory(ListAPIView):
+    serializer_class = QuizSerializer
+
+    def get_queryset(self):
+        """
+        This view returns a list of all quizzes for a given category.
+        The category_id is provided in the URL.
+        """
+        category_id = self.kwargs['category_id']
+        return Quiz.objects.filter(category_id=category_id)
 
 class QuizCreateAPIView(generics.CreateAPIView):
     """
@@ -137,6 +183,17 @@ class QuizCreateAPIView(generics.CreateAPIView):
         return Response(serializer.data, status=status_code, headers=headers)
 
 
+@api_view(['GET'])
+def list_tags(request):
+    tags = Tag.objects.all()
+    serializer = TagSerializer(tags, many=True)
+    return Response(serializer.data)
 
 
-
+@api_view(['GET'])
+def get_quiz_tags(request, quiz_id):
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+    tags = quiz.tags.all()
+    serializer = TagSerializer(tags, many=True)
+    print('test')
+    return Response(serializer.data)
