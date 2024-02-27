@@ -12,7 +12,11 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.exceptions import FieldDoesNotExist
+from django.db.models import Q
+from django.core.exceptions import FieldError,ValidationError
 
+from .serializers import QuizSerializer
 # Local application/library-specific imports
 from .filter import CategoryFilter
 from .serializers import CategorySerializer, QuizSerializer, TagSerializer
@@ -122,23 +126,32 @@ class PopularQuizzesView(ListAPIView):
 
 class QuizList(generics.ListAPIView):
     """
-    Return a list of all quizzes. If a 'category' parameter is supplied in the URL,
-    the view will return all quizzes belonging to that category and its subcategories.
-    If category does not exist it returns an empty response.
+    Return a list of all quizzes, with optional filtering based on category or tag,
+    and further filtering based on a specified field (e.g., name or ID).
     """
     serializer_class = QuizSerializer
 
     def get_queryset(self):
-        category_name = self.request.query_params.get('category', None)
+        filter_type = self.request.query_params.get('filter_type')
+        filter_field = self.request.query_params.get('filter_field')
+        filter_value = self.request.query_params.get('filter_value')
 
-        if category_name:
+        if filter_type and filter_field and filter_value:
+            # Construct the filter keyword dynamically
+            filter_keyword = f"{filter_type}__{filter_field}"
+
             try:
-                category = Category.objects.get(name=category_name)
-                categories = category.get_descendants(include_self=True)
-                return Quiz.objects.filter(category__in=categories)
-            except Category.DoesNotExist:
-                return Quiz.objects.none()
-        return Quiz.objects.all()
+                # Attempt to filter using the constructed keyword
+                queryset = Quiz.objects.filter(**{filter_keyword: filter_value})
+                if not queryset:
+                    raise ValidationError(f"No results found for the provided filter.")
+                return queryset
+            except FieldError as e:
+                # Catching FieldError to handle incorrect field paths
+                raise ValidationError(f"{filter_keyword} is not a valid field for filtering. Error: {str(e)}")
+        else:
+            return Quiz.objects.all()
+
 
 class QuizListFromCategory(ListAPIView):
     serializer_class = QuizSerializer

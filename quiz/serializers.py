@@ -16,7 +16,7 @@ class QuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        fields = ['id', 'name', 'number_of_questions', 'time', 'required_score_to_pass', 'difficulty', 'category', 'category_tree', 'is_featured', 'imgSrc', 'play_count', 'description']
+        fields = ['id', 'name', 'number_of_questions', 'time', 'required_score_to_pass', 'difficulty', 'category', 'category_tree', 'tags', 'is_featured', 'imgSrc', 'play_count', 'description']
 
     def get_category_tree(self, obj):
         category = obj.category
