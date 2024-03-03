@@ -1,5 +1,7 @@
 from django.db import models
 from quiz.models import Quiz
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFill
 
 class Question(models.Model):
     text = models.CharField(max_length=200)
@@ -8,11 +10,26 @@ class Question(models.Model):
     time_limit = models.PositiveIntegerField(default=30)  # Time limit for the question in seconds
     imgSrc = models.ImageField(upload_to='quiz_images/', blank=True)  # Optional image for the question
 
+    # Define ImageSpecFields for different image sizes
+    imgSrc_small = ImageSpecField(source='imgSrc',
+                                  processors=[ResizeToFill(100, 100)],
+                                  format='WEBP',
+                                  options={'quality': 60})
+    imgSrc_medium = ImageSpecField(source='imgSrc',
+                                   processors=[ResizeToFill(200, 200)],
+                                   format='WEBP',
+                                   options={'quality': 70})
+    imgSrc_large = ImageSpecField(source='imgSrc',
+                                  processors=[ResizeToFill(400, 400)],
+                                  format='WEBP',
+                                  options={'quality': 80})
+
     def __str__(self):
         return str(self.text)
 
     def get_answers(self):
         return self.answer_set.all()
+
 
 
 class Answer(models.Model):
