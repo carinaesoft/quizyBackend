@@ -1,6 +1,8 @@
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.exceptions import ValidationError
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFill
 
 DIFF_CHOICES = (
     ('Łatwy', 'Łatwy'),
@@ -12,8 +14,20 @@ DIFF_CHOICES = (
 class Category(MPTTModel):
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)  # Add a description field
-    bgImage = models.ImageField(upload_to='category_images/', blank=True)  # Add an image field
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    bgImage = models.ImageField(upload_to='categories/original/')
+    bgImage_small = ImageSpecField(source='bgImage',
+                                   processors=[ResizeToFill(100, 100)],
+                                   format='WEBP',
+                                   options={'quality': 60})
+    bgImage_medium = ImageSpecField(source='bgImage',
+                                    processors=[ResizeToFill(200, 200)],
+                                    format='WEBP',
+                                    options={'quality': 70})
+    bgImage_large = ImageSpecField(source='bgImage',
+                                   processors=[ResizeToFill(400, 400)],
+                                   format='WEBP',
+                                   options={'quality': 80})
 
     class MPTTMeta:
         order_insertion_by = ['name']
@@ -30,10 +44,22 @@ class Quiz(models.Model):
     required_score_to_pass = models.IntegerField(help_text="required score in %")
     difficulty = models.CharField(max_length=6, choices=DIFF_CHOICES)
     is_featured = models.BooleanField(default=False)
-    imgSrc = models.ImageField(upload_to='quiz_images/', blank=True)  # Add an image field
     tags = models.ManyToManyField('Tag', related_name='quizzes', blank=True)  # Many-to-many field for tags
     play_count = models.IntegerField(default=0)
     description = models.TextField(max_length=500, null=True)  # New description field
+    imgSrc = models.ImageField(upload_to='quizzes/original/')
+    imgSrc_small = ImageSpecField(source='imgSrc',
+                                  processors=[ResizeToFill(100, 100)],
+                                  format='WEBP',
+                                  options={'quality': 60})
+    imgSrc_medium = ImageSpecField(source='imgSrc',
+                                   processors=[ResizeToFill(200, 200)],
+                                   format='WEBP',
+                                   options={'quality': 70})
+    imgSrc_large = ImageSpecField(source='imgSrc',
+                                  processors=[ResizeToFill(400, 400)],
+                                  format='WEBP',
+                                  options={'quality': 80})
 
     def save(self, *args, **kwargs):
         if self.description and len(self.description) > 500:
