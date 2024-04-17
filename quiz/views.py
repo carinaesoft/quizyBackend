@@ -12,6 +12,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.filters import SearchFilter
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
 from django.core.exceptions import FieldError,ValidationError
@@ -49,6 +50,11 @@ class CategoryList(generics.ListAPIView):
 
 
 class CategoryDetail(RetrieveAPIView):
+    """
+    This view retrieves the details of a specific category based on its name.
+    The category name is provided in the URL.
+    """
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'name'
@@ -63,6 +69,10 @@ class CategoryDetail(RetrieveAPIView):
 
 
 class SubcategoryList(ListAPIView):
+    """
+    This view returns a list of all subcategories for a given category.
+    The category name is provided in the URL.
+    """
     serializer_class = CategorySerializer
 
     def get_queryset(self):
@@ -129,7 +139,10 @@ class QuizList(generics.ListAPIView):
     Return a list of all quizzes, with optional filtering based on category or tag,
     and further filtering based on a specified field (e.g., name or ID).
     """
+    queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['name', 'description']
 
     def get_queryset(self):
         filter_type = self.request.query_params.get('filter_type')
@@ -154,6 +167,10 @@ class QuizList(generics.ListAPIView):
 
 
 class QuizListFromCategory(ListAPIView):
+    """
+    This view returns a list of all quizzes for a given category.
+    The category ID is provided in the URL.
+    """
     serializer_class = QuizSerializer
 
     def get_queryset(self):
@@ -185,6 +202,9 @@ class QuizCreateAPIView(generics.CreateAPIView):
 
 @api_view(['GET'])
 def list_tags(request):
+    """
+    This view returns a list of all tags.
+    """
     tags = Tag.objects.all()
     serializer = TagSerializer(tags, many=True)
     return Response(serializer.data)
@@ -192,6 +212,10 @@ def list_tags(request):
 
 @api_view(['GET'])
 def get_quiz_tags(request, quiz_id):
+    """
+    This view returns a list of all tags associated with a specific quiz.
+    The quiz ID is provided in the URL.
+    """
     quiz = get_object_or_404(Quiz, pk=quiz_id)
     tags = quiz.tags.all()
     serializer = TagSerializer(tags, many=True)

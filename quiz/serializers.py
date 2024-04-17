@@ -29,7 +29,6 @@ from .models import Quiz, Category  # Make sure Category is imported if it's use
 class QuizSerializer(serializers.ModelSerializer):
     category_tree = serializers.SerializerMethodField()
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    description = serializers.CharField(max_length=500, required=False, allow_blank=True)
     imgSrc_small_url = serializers.SerializerMethodField()
     imgSrc_medium_url = serializers.SerializerMethodField()
     imgSrc_large_url = serializers.SerializerMethodField()
@@ -56,6 +55,13 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def get_imgSrc_large_url(self, obj):
         return obj.imgSrc_large.url if obj.imgSrc else None
+
+    def to_representation(self, instance):
+        # Call the original `to_representation` to get the original serialized data
+        ret = super().to_representation(instance)
+        # Replace the `difficulty` field with its display value
+        ret['difficulty'] = instance.get_difficulty_display()
+        return ret
 
     def validate_imgSrc(self, value):
         if not value.name.lower().endswith(('.jpg', '.jpeg', '.png')):
