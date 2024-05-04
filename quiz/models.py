@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
 from django.utils.translation import gettext_lazy as _
+from django.utils.text import slugify
+
 
 DIFF_CHOICES = (
     ('Easy', _('Łatwy')),
@@ -45,6 +47,7 @@ class Category(MPTTModel):
 
 class Quiz(models.Model):
     name = models.CharField(max_length=120, verbose_name=_("Name"))
+    slug = models.SlugField(max_length=150, blank=True, editable=False)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=_("Category"))
     number_of_questions = models.IntegerField(verbose_name=_("Number of Questions"))
     time = models.IntegerField(help_text=_("Duration of the quiz in minutes"), verbose_name=_("Time"))
@@ -70,6 +73,7 @@ class Quiz(models.Model):
                                   options={'quality': 80},
                                   )
     def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
         if self.description and len(self.description) > 500:
             raise ValidationError(_("Description cannot be more than 500 characters."))
         super().save(*args, **kwargs)
