@@ -15,6 +15,7 @@ DIFF_CHOICES = (
 
 class Category(MPTTModel):
     name = models.CharField(max_length=150, verbose_name=_("Name"))
+    slug = models.SlugField(max_length=150, blank=True, editable=False)
     description = models.TextField(blank=True, verbose_name=_("Description"))
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name=_("Parent"))
     bgImage = models.ImageField(upload_to='categories/original/', verbose_name=_("Background Image"))
@@ -33,6 +34,9 @@ class Category(MPTTModel):
                                    format='WEBP',
                                    options={'quality': 80},
                                     )
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     class MPTTMeta:
         order_insertion_by = ['name']
@@ -62,7 +66,7 @@ class Quiz(models.Model):
                                   processors=[ResizeToFill(100, 100)],
                                   format='WEBP',
                                   options={'quality': 60},
-                                  )
+                                  ) 
     imgSrc_medium = ImageSpecField(source='imgSrc',
                                    processors=[ResizeToFill(200, 200)],
                                    format='WEBP',
@@ -91,7 +95,12 @@ class Quiz(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name=_("Name"))
+    slug = models.SlugField(max_length=150, blank=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

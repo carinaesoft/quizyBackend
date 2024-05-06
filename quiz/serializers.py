@@ -11,7 +11,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'parent_name', 'description', 'bgImage',
-                  'bgImage_small_url', 'bgImage_medium_url', 'bgImage_large_url']
+                  'bgImage_small_url', 'bgImage_medium_url', 'bgImage_large_url', 'slug']
 
     def get_bgImage_small_url(self, obj):
         return obj.bgImage_small.url if obj.bgImage else None
@@ -82,5 +82,5 @@ class QuizSerializer(serializers.ModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ['id', 'name', 'created_at']
+        fields = ['id', 'name', 'created_at', 'slug']
         read_only_fields = ['created_at']  # Assuming you want the created_at timestamp to be read-only
