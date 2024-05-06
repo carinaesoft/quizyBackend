@@ -12,6 +12,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.filters import SearchFilter
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
 from django.core.exceptions import FieldError,ValidationError
@@ -25,6 +26,14 @@ from api.serializers import \
 from questions.models import Answer, Question
 from quiz.models import Category, Quiz, Tag
 from quiz.utilities import generate_custom_unique_identifier
+from rest_framework.pagination import PageNumberPagination
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 
 
 # --------------------- Class: CategoryList ---------------------
@@ -49,6 +58,11 @@ class CategoryList(generics.ListAPIView):
 
 
 class CategoryDetail(RetrieveAPIView):
+    """
+    This view retrieves the details of a specific category based on its name.
+    The category name is provided in the URL.
+    """
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'name'
@@ -63,6 +77,10 @@ class CategoryDetail(RetrieveAPIView):
 
 
 class SubcategoryList(ListAPIView):
+    """
+    This view returns a list of all subcategories for a given category.
+    The category name is provided in the URL.
+    """
     serializer_class = CategorySerializer
 
     def get_queryset(self):
@@ -126,35 +144,59 @@ class PopularQuizzesView(ListAPIView):
 
 class QuizList(generics.ListAPIView):
     """
-    Return a list of all quizzes, with optional filtering based on category or tag,
+    Return a list of all quizzes, with optional filtering based on category, tags,
     and further filtering based on a specified field (e.g., name or ID).
     """
+    queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    search_fields = ['name', 'description']
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
+        """
+        Optionally filters the returned quizzes based on category or tags,
+        and further filtering based on a specified field (e.g., name or ID).
+        """
+        queryset = super().get_queryset()
         filter_type = self.request.query_params.get('filter_type')
         filter_field = self.request.query_params.get('filter_field')
         filter_value = self.request.query_params.get('filter_value')
+        tags = self.request.query_params.getlist('tags')
 
+        # Handle filtering by tags if 'tags' parameter is present
+        if tags:
+            tags = [int(tag) for tag in tags]
+            queryset = queryset.filter(tags__id__in=tags).distinct()
+
+        # Dynamic filtering based on filter_type, filter_field, and filter_value
         if filter_type and filter_field and filter_value:
-            # Construct the filter keyword dynamically
             filter_keyword = f"{filter_type}__{filter_field}"
-
             try:
-                # Attempt to filter using the constructed keyword
-                queryset = Quiz.objects.filter(**{filter_keyword: filter_value})
-                if not queryset:
-                    raise ValidationError(f"No results found for the provided filter.")
-                return queryset
+                queryset = queryset.filter(**{filter_keyword: filter_value})
             except FieldError as e:
-                # Catching FieldError to handle incorrect field paths
                 raise ValidationError(f"{filter_keyword} is not a valid field for filtering. Error: {str(e)}")
-        else:
-            return Quiz.objects.all()
+
+        # Direct filtering by name if specified directly
+        name = self.request.query_params.get('name')
+        slug = self.request.query_params.get('slug')
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        if slug:
+            queryset = queryset.filter(slug__exact=slug)
+
+        return queryset
 
 
 class QuizListFromCategory(ListAPIView):
+    """
+    This view returns a list of all quizzes for a given category.
+    The category ID is provided in the URL.
+    """
     serializer_class = QuizSerializer
+    pagination_class = StandardResultsSetPagination
+
 
     def get_queryset(self):
         """
@@ -185,6 +227,9 @@ class QuizCreateAPIView(generics.CreateAPIView):
 
 @api_view(['GET'])
 def list_tags(request):
+    """
+    This view returns a list of all tags.
+    """
     tags = Tag.objects.all()
     serializer = TagSerializer(tags, many=True)
     return Response(serializer.data)
@@ -192,6 +237,10 @@ def list_tags(request):
 
 @api_view(['GET'])
 def get_quiz_tags(request, quiz_id):
+    """
+    This view returns a list of all tags associated with a specific quiz.
+    The quiz ID is provided in the URL.
+    """
     quiz = get_object_or_404(Quiz, pk=quiz_id)
     tags = quiz.tags.all()
     serializer = TagSerializer(tags, many=True)

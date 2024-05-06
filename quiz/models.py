@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
 from django.utils.translation import gettext_lazy as _
+from django.utils.text import slugify
+
 
 DIFF_CHOICES = (
     ('Easy', _('Łatwy')),
@@ -13,6 +15,7 @@ DIFF_CHOICES = (
 
 class Category(MPTTModel):
     name = models.CharField(max_length=150, verbose_name=_("Name"))
+    slug = models.SlugField(max_length=150, blank=True, editable=False)
     description = models.TextField(blank=True, verbose_name=_("Description"))
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name=_("Parent"))
     bgImage = models.ImageField(upload_to='categories/original/', verbose_name=_("Background Image"))
@@ -31,6 +34,9 @@ class Category(MPTTModel):
                                    format='WEBP',
                                    options={'quality': 80},
                                     )
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     class MPTTMeta:
         order_insertion_by = ['name']
@@ -45,6 +51,7 @@ class Category(MPTTModel):
 
 class Quiz(models.Model):
     name = models.CharField(max_length=120, verbose_name=_("Name"))
+    slug = models.SlugField(max_length=150, blank=True, editable=False)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=_("Category"))
     number_of_questions = models.IntegerField(verbose_name=_("Number of Questions"))
     time = models.IntegerField(help_text=_("Duration of the quiz in minutes"), verbose_name=_("Time"))
@@ -59,7 +66,7 @@ class Quiz(models.Model):
                                   processors=[ResizeToFill(100, 100)],
                                   format='WEBP',
                                   options={'quality': 60},
-                                  )
+                                  ) 
     imgSrc_medium = ImageSpecField(source='imgSrc',
                                    processors=[ResizeToFill(200, 200)],
                                    format='WEBP',
@@ -70,6 +77,7 @@ class Quiz(models.Model):
                                   options={'quality': 80},
                                   )
     def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
         if self.description and len(self.description) > 500:
             raise ValidationError(_("Description cannot be more than 500 characters."))
         super().save(*args, **kwargs)
@@ -87,7 +95,12 @@ class Quiz(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name=_("Name"))
+    slug = models.SlugField(max_length=150, blank=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
